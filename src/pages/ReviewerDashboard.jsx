@@ -1,0 +1,2 @@
+import { Link } from 'react-router-dom';
+export default function ReviewerDashboard() { return <main><h1>Reviewer dashboard</h1><p>Review submitted employee self-reviews and record evidence-based feedback.</p><Link className="button" to="/reviewer/assessment">Create assessment</Link></main>; }

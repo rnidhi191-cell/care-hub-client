@@ -1,0 +1,2 @@
+import { Link } from 'react-router-dom';
+export default function EmployeeDashboard() { return <main><h1>Employee dashboard</h1><p>Complete your self-review to record your contribution, achievements, reflections, and development goals.</p><Link className="button" to="/self-review">Start self-review</Link></main>; }
