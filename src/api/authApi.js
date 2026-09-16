@@ -1,33 +1,21 @@
-import axios from "axios";
-
-const API = axios.create({
-  baseURL: "http://localhost:5000/api",
-});
+import api from '../api';
 
 export const registerUser = (data) => {
-  return API.post("/auth/register", data);
+  return api.post('/auth/register', data);
 };
 
 export const loginUser = (data) => {
-  return API.post("/auth/login", data);
+  return api.post('/auth/login', data);
 };
 
-export const getProfile = (token) => {
-  return API.get("/auth/profile", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export const getProfile = () => {
+  return api.get('/auth/profile');
 };
 
-export const logoutUser = (token) => {
-  return API.post(
-    "/auth/logout",
-    {},
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+export const logoutUser = () => {
+  return api.post('/auth/logout');
+};
+
+export const getUsers = (role) => {
+  return api.get('/auth/users', { params: role ? { role } : {} });
 };
