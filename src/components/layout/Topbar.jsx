@@ -33,14 +33,8 @@ export default function Topbar({ user }) {
     navigate('/login');
   };
 
-  const openNotification = async (notification) => {
-    if (!notification.readAt) {
-      try {
-        await api.post(`/notifications/${notification._id}/read`);
-        setNotifications((items) => items.map((item) => item._id === notification._id ? { ...item, readAt: new Date().toISOString() } : item));
-        setUnreadCount((count) => Math.max(0, count - 1));
-      } catch { /* Navigation remains available if the read request fails. */ }
-    }
+  const openNotification = (notification) => {
+    // Reading is explicit; navigation must retain the notification unchanged.
     setIsOpen(false);
     if (notification.link) navigate(notification.link);
   };

@@ -13,6 +13,7 @@ export default function SelfReviewForm() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [assessment, setAssessment] = useState(null);
+  const [eligibleReviewers, setEligibleReviewers] = useState([]);
 
   const [form, setForm] = useState({
     cycle: 'April',
@@ -23,7 +24,14 @@ export default function SelfReviewForm() {
     evolve: '',
     goals: [{ title: '', employeeAssessment: '' }],
     status: 'Completed',
+    selectedReviewer: '',
   });
+
+  useEffect(() => {
+    api.get('/reviews/eligible-reviewers')
+      .then(({ data }) => setEligibleReviewers(data.data || []))
+      .catch(() => setEligibleReviewers([]));
+  }, []);
 
   // Load existing review if ID provided
   useEffect(() => {
@@ -44,6 +52,7 @@ export default function SelfReviewForm() {
           evolve: item.evolve || '',
           goals: item.goals?.length ? item.goals : [{ title: '', employeeAssessment: '' }],
           status: item.status || 'Completed',
+          selectedReviewer: item.selectedReviewer?._id || item.selectedReviewer || '',
         });
         if (item.assessment) {
           setAssessment(item.assessment);
@@ -198,6 +207,26 @@ export default function SelfReviewForm() {
             />
           </label>
         </div>
+
+        <label>
+          Select colleague reviewer
+          <small style={{ display: 'block', color: 'var(--text-muted)' }}>
+            Choose one active colleague to provide the first review. You cannot select yourself.
+          </small>
+          <select
+            required
+            value={form.selectedReviewer}
+            disabled={!!reviewId}
+            onChange={(e) => handleChange('selectedReviewer', e.target.value)}
+          >
+            <option value="">-- Choose a colleague --</option>
+            {eligibleReviewers.map((reviewer) => (
+              <option key={reviewer._id} value={reviewer._id}>
+                {reviewer.name} ({reviewer.email})
+              </option>
+            ))}
+          </select>
+        </label>
 
         {/* C - Contribute */}
         <label>

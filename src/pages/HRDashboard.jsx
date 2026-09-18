@@ -8,7 +8,7 @@ import AttachmentPanel from '../components/AttachmentPanel';
 // ---------------------------------------------------------------------------
 
 const EMPLOYMENT_STATUS_OPTIONS = ['FULL_TIME', 'PART_TIME', 'PROBATION', 'CONTRACT', 'TERMINATED'];
-const ROLE_OPTIONS = ['Employee', 'Reviewer', 'HR', 'MANAGER', 'HR_ADMIN', 'SUPER_ADMIN'];
+const ROLE_OPTIONS = ['EMPLOYEE',  'HR', 'MANAGER', 'HR_ADMIN', 'SUPER_ADMIN'];
 
 const HR_TABS = [
   { key: 'dashboard', label: '📊 Dashboard' },
@@ -28,11 +28,25 @@ const BLANK_EMP_FORM = {
   departmentId: '',
   jobTitleId: '',
   locationId: '',
+  managerId: '',
   joiningDate: '',
   employmentStatus: 'FULL_TIME',
   phoneNumber: '',
   status: 'active',
 };
+
+const ReviewText = ({ review }) => (
+  <details style={{ marginTop: '0.5rem' }}>
+    <summary style={{ cursor: 'pointer', fontWeight: 600 }}>View all review text</summary>
+    <div className="grid-2" style={{ marginTop: '0.75rem' }}>
+      <div><strong>Self — Contribute</strong><p>{review.contribute || '—'}</p></div><div><strong>Self — Achieve</strong><p>{review.achieve || '—'}</p></div>
+      <div><strong>Self — Reflect</strong><p>{review.reflect || '—'}</p></div><div><strong>Self — Evolve</strong><p>{review.evolve || '—'}</p></div>
+    </div>
+    {review.goals?.length > 0 && <div><strong>Self-review goals</strong>{review.goals.map((goal, index) => <p key={goal._id || index}><strong>{goal.title}:</strong> {goal.employeeAssessment || '—'}</p>)}</div>}
+    <div><strong>Colleague review {review.assessment?.reviewer?.name ? `— ${review.assessment.reviewer.name}` : ''}</strong><p>{review.assessment?.overallComments || 'Awaiting colleague review.'}</p>{review.assessment && <><p><strong>Strengths:</strong> {review.assessment.strengths || '—'}</p><p><strong>Areas for improvement:</strong> {review.assessment.areasForImprovement || '—'}</p><p><strong>Overall assessment:</strong> {review.assessment.overallAssessment || '—'}</p></>}</div>
+    <div style={{ marginTop: '0.75rem' }}><strong>Manager review {review.managerReview?.manager?.name ? `— ${review.managerReview.manager.name}` : ''}</strong><p>{review.managerReview?.comments || 'Awaiting manager review.'}</p>{review.managerReview && <p><strong>Manager rating:</strong> {review.managerReview.rating}/5 {review.managerReview.finalRating ? `(${review.managerReview.finalRating})` : ''}</p>}</div>
+  </details>
+);
 
 // ---------------------------------------------------------------------------
 // Main Component
@@ -195,6 +209,7 @@ export default function HRDashboard() {
         departmentId: empForm.departmentId || undefined,
         jobTitleId: empForm.jobTitleId || undefined,
         locationId: empForm.locationId || undefined,
+        managerId: empForm.managerId || undefined,
         joiningDate: empForm.joiningDate || undefined,
         employmentStatus: empForm.employmentStatus,
         phoneNumber: empForm.phoneNumber,
@@ -314,6 +329,31 @@ export default function HRDashboard() {
       } catch (err) {
         Swal.fire({ icon: 'error', text: err.response?.data?.message || 'Failed to calibrate' });
       }
+    }
+  };
+
+  const handleFinalReview = async (managerReview) => {
+    const { value: finalRating } = await Swal.fire({
+      title: 'Finalize HR Review',
+      input: 'select',
+      inputOptions: {
+        'Needs Significant Improvement': 'Needs Significant Improvement',
+        'Needs Improvement': 'Needs Improvement',
+        'Meets Expectations': 'Meets Expectations',
+        'Exceeds Expectations': 'Exceeds Expectations',
+        Outstanding: 'Outstanding',
+      },
+      inputValue: managerReview.finalRating || 'Meets Expectations',
+      showCancelButton: true,
+      confirmButtonText: 'Finalize Rating',
+    });
+    if (!finalRating) return;
+    try {
+      await api.put(`/reviews/manager-reviews/${managerReview._id}/finalize`, { finalRating });
+      Swal.fire({ icon: 'success', title: 'Final rating published', timer: 1400, showConfirmButton: false });
+      fetchData();
+    } catch (err) {
+      Swal.fire({ icon: 'error', text: err.response?.data?.message || 'Failed to finalize the review' });
     }
   };
 
@@ -564,6 +604,16 @@ export default function HRDashboard() {
                   </label>
 
                   <label>
+                    Manager
+                    <select value={empForm.managerId} onChange={(e) => setEmpForm({ ...empForm, managerId: e.target.value })}>
+                      <option value="">-- No Manager --</option>
+                      {employees.filter(e => e.user?.role === 'MANAGER' && e.employmentStatus !== 'TERMINATED').map(m => (
+                        <option key={m._id} value={m._id}>{m.user?.name} ({m.employeeCode})</option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label>
                     Phone Number
                     <input
                       type="text" placeholder="+1-555-0100"
@@ -710,6 +760,7 @@ export default function HRDashboard() {
                     <th>Cycle &amp; Year</th>
                     <th>Status</th>
                     <th>Assessment Status</th>
+                    <th>All review text</th>
                     <th>Admin Actions</th>
                   </tr>
                 </thead>
@@ -735,16 +786,25 @@ export default function HRDashboard() {
                           <span className="badge badge-pending">Pending Assessment</span>
                         )}
                       </td>
+                      <td><ReviewText review={rev} /></td>
                       <td>
-                        <select
-                          style={{ display: 'inline-block', width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
-                          value={rev.status}
-                          onChange={(e) => handleUpdateStatus(rev._id, e.target.value)}
-                        >
-                          <option value="Completed">Completed</option>
-                          <option value="Not Completed">Not Completed</option>
-                          <option value="HR Assisted">HR Assisted</option>
-                        </select>
+                        <div className="button-group" style={{ margin: 0 }}>
+                          <select
+                            style={{ display: 'inline-block', width: 'auto', padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
+                            value={rev.status}
+                            onChange={(e) => handleUpdateStatus(rev._id, e.target.value)}
+                          >
+                            <option value="Completed">Completed</option>
+                            <option value="Not Completed">Not Completed</option>
+                            <option value="HR Assisted">HR Assisted</option>
+                          </select>
+                          {rev.managerReview && !rev.managerReview.finalRating && (
+                            <button type="button" className="button button-sm" onClick={() => handleFinalReview(rev.managerReview)}>
+                              Finalize HR Review
+                            </button>
+                          )}
+                          {rev.managerReview?.finalRating && <span className="badge badge-completed">{rev.managerReview.finalRating}</span>}
+                        </div>
                       </td>
                     </tr>
                   ))}

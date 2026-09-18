@@ -74,7 +74,16 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={homeFor(user) || '/login'} replace />} />
+      {/* Root: show Login when not authenticated, redirect to dashboard when authenticated */}
+      <Route
+        path="/"
+        element={
+          user && homeFor(user)
+            ? <Navigate to={homeFor(user)} replace />
+            : <Login onLogin={(credentials) => dispatch(setCredentials(credentials))} />
+        }
+      />
+
       {/* Public Routes */}
       <Route
         path="/login"
@@ -104,17 +113,17 @@ export default function App() {
         element={guard(['EMPLOYEE', 'HR', 'ADMIN'], <SelfReviewForm />)}
       />
 
-      {/* Reviewer / Manager Routes */}
+      {/* Reviewer / Manager Routes — MANAGER and EMPLOYEE-colleague share the assessment form;
+          /reviewer dashboard is for MANAGERs; EMPLOYEE colleagues use /reviewer/assessment directly */}
       <Route
         path="/reviewer"
         element={guard(['MANAGER', 'ADMIN'], <ReviewerDashboard />)}
       />
       <Route
         path="/reviewer/assessment"
-        element={guard(['MANAGER', 'HR', 'ADMIN'], <ReviewerAssessmentForm />)}
+        element={guard(['EMPLOYEE', 'MANAGER', 'HR', 'ADMIN'], <ReviewerAssessmentForm />)}
       />
 
-      
       {/* HR Routes */}
       <Route
         path="/hr"

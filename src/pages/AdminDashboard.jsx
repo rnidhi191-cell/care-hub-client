@@ -4,12 +4,14 @@ import Swal from 'sweetalert2';
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [activeTab, setActiveTab] = useState('dashboard');
 
   const fetchData = async () => {
     try {
-      const usersRes = await api.get('/auth/users');
+      const [usersRes, reviewsRes] = await Promise.all([api.get('/auth/users'), api.get('/reviews/self-reviews')]);
       setUsers(usersRes.data?.data || []);
+      setReviews(reviewsRes.data?.data || []);
     } catch (err) {
       console.error(err);
     }
@@ -83,10 +85,21 @@ export default function AdminDashboard() {
             <div className="label">Total HR</div>
             <div className="value">{users.filter(u => u.role === 'HR').length}</div>
           </div>
+          <div className="stat-card">
+            <div className="label">Finalized Ratings</div>
+            <div className="value">{reviews.filter((review) => review.managerReview?.finalRating || review.assessment?.isFinalized).length}</div>
+          </div>
           <div className="stat-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <button className="button" onClick={handleCreateHR}>+ Create HR</button>
           </div>
         </div>
+      )}
+
+      {activeTab === 'dashboard' && reviews.some((review) => review.managerReview?.finalRating || review.assessment?.finalRating) && (
+        <section className="card data-card">
+          <div className="card-header"><h2>Published Performance Ratings</h2></div>
+          <table><thead><tr><th>Employee</th><th>Cycle</th><th>Final rating</th></tr></thead><tbody>{reviews.filter((review) => review.managerReview?.finalRating || review.assessment?.finalRating).map((review) => <tr key={review._id}><td>{review.employee?.name || 'Unknown'}</td><td>{review.cycle} {review.year}</td><td><span className="badge badge-completed">{review.managerReview?.finalRating || review.assessment?.finalRating}</span></td></tr>)}</tbody></table>
+        </section>
       )}
 
       {activeTab === 'users' && (
