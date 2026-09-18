@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import api from '../api';
+import companyLogo from '../assets/code_underscore.png';
 
 export default function Login({ onLogin }) {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -23,12 +24,7 @@ export default function Login({ onLogin }) {
       const { token, accessToken, refreshToken, user } = data.data;
 
       const activeToken = accessToken || token;
-      localStorage.setItem('careHubToken', activeToken);
-      if (refreshToken) {
-        localStorage.setItem('careHubRefreshToken', refreshToken);
-      }
-      localStorage.setItem('careHubUser', JSON.stringify(user));
-      onLogin(user);
+      onLogin({ user, token: activeToken, refreshToken });
 
       await Swal.fire({
         icon: 'success',
@@ -39,12 +35,11 @@ export default function Login({ onLogin }) {
       });
 
       const role = user.role?.toUpperCase();
-      const targetPath =
-        role === 'SUPER_ADMIN' || role === 'HR_ADMIN' || role === 'HR' || role === 'HR_HRBP'
-          ? '/hr'
-          : role === 'MANAGER' || role === 'REVIEWER'
-          ? '/reviewer'
-          : '/employee';
+      const targetPath = role === 'ADMIN' ? '/admin'
+        : role === 'HR' ? '/hr'
+        : role === 'MANAGER' ? '/reviewer'
+        : role === 'EMPLOYEE' ? '/employee'
+        : '/login';
 
       navigate(targetPath);
     } catch (err) {
@@ -61,10 +56,14 @@ export default function Login({ onLogin }) {
   };
 
   return (
-    <main className="login-container">
-      <div className="card">
-        <h1>CARE Hub</h1>
-        <p className="subtitle">Sign in to manage your performance reviews and growth goals.</p>
+    <main className="login-container" aria-labelledby="login-title">
+      <div className="card auth-card">
+        <div className="login-logo-frame">
+          <img className="login-logo" src={companyLogo} alt="Code Underscore Technology" />
+        </div>
+        <h1 id="login-title">Welcome to the CARE Program</h1>
+
+        <p className="subtitle">Employee Performance &amp; Growth Management System</p>
 
         {error && <div className="alert alert-error">{error}</div>}
 
@@ -93,14 +92,10 @@ export default function Login({ onLogin }) {
             />
           </label>
 
-          <button type="submit" disabled={loading} style={{ width: '100%', marginTop: '0.5rem' }}>
+          <button className="login-submit" type="submit" disabled={loading}>
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-
-        <p style={{ textAlign: 'center', marginTop: '1.5rem', marginBottom: 0 }}>
-          New to CARE Hub? <Link to="/register">Create an account</Link>
-        </p>
       </div>
     </main>
   );

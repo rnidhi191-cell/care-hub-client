@@ -66,5 +66,4 @@ export const selectPermissions = (state) => state.auth.permissions;
 export const selectIsAuthenticated = (state) => state.auth.isAuthenticated;
 export const selectUserRole = (state) => state.auth.user?.role;
 export const hasPermission = (state, permission) =>
-  state.auth.permissions.includes(permission) || state.auth.user?.role === 'SUPER_ADMIN';
-
+  state.auth.permissions.includes(permission) || state.auth.user?.role === 'ADMIN';

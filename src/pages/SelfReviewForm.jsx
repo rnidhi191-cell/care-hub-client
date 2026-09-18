@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import api from '../api';
+import AttachmentPanel from '../components/AttachmentPanel';
 
 export default function SelfReviewForm() {
   const [searchParams] = useSearchParams();
@@ -151,8 +152,9 @@ export default function SelfReviewForm() {
 
   return (
     <main>
-      <div className="card-header" style={{ borderBottom: 'none', paddingBottom: 0 }}>
+      <div className="page-header" style={{ borderBottom: 'none', paddingBottom: 0 }}>
         <div>
+          <div className="page-eyebrow">CARE reflection</div>
           <h1>{reviewId ? 'Edit Self-Review' : 'New CARE Self-Review'}</h1>
           <p>
             Complete all four pillars of the CARE framework: Contribute, Achieve, Reflect, and Evolve.
@@ -302,6 +304,12 @@ export default function SelfReviewForm() {
             + Add Another Goal
           </button>
         </div>
+
+        {reviewId && <AttachmentPanel endpoint={`/reviews/self-reviews/${reviewId}/attachments`} title="Review evidence" />}
+
+        {reviewId && form.goals.map((goal, idx) => goal._id && (
+          <AttachmentPanel key={goal._id} endpoint={`/reviews/self-reviews/${reviewId}/goals/${goal._id}/attachments`} title={`Evidence for goal #${idx + 1}`} />
+        ))}
 
         {/* Action Buttons */}
         <div className="button-group">

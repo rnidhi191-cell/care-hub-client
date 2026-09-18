@@ -1,96 +1,101 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { logout } from '../../store/slices/authSlice';
 import { Bell, LogOut } from 'lucide-react';
+import api from '../../api';
 
 export default function Topbar({ user }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const loadNotifications = async () => {
+    try {
+      const { data } = await api.get('/notifications');
+      setNotifications(data.data || []);
+      setUnreadCount(data.unreadCount || 0);
+    } catch {
+      // The notification tray should never interrupt normal navigation.
+    }
+  };
+
+  useEffect(() => {
+    loadNotifications();
+    const interval = window.setInterval(loadNotifications, 60000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   const handleLogout = () => {
     dispatch(logout());
     navigate('/login');
   };
 
+  const openNotification = async (notification) => {
+    if (!notification.readAt) {
+      try {
+        await api.post(`/notifications/${notification._id}/read`);
+        setNotifications((items) => items.map((item) => item._id === notification._id ? { ...item, readAt: new Date().toISOString() } : item));
+        setUnreadCount((count) => Math.max(0, count - 1));
+      } catch { /* Navigation remains available if the read request fails. */ }
+    }
+    setIsOpen(false);
+    if (notification.link) navigate(notification.link);
+  };
+
+  const markAllRead = async () => {
+    try {
+      await api.post('/notifications/read-all');
+      setNotifications((items) => items.map((item) => ({ ...item, readAt: item.readAt || new Date().toISOString() })));
+      setUnreadCount(0);
+    } catch { /* Keep the tray usable if the request cannot be completed. */ }
+  };
+
   if (!user) return null;
 
   return (
-    <header
-      style={{
-        height: '64px',
-        backgroundColor: '#ffffff',
-        borderBottom: '1px solid #e2e8f0',
-        padding: '0 1.5rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        position: 'sticky',
-        top: 0,
-        zIndex: 30,
-        boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#0f766e' }}>
+    <header className="topbar">
+      <div className="topbar__context">
+        <span className="topbar__product">
           CARE Hub Enterprise
         </span>
-        <span style={{ color: '#cbd5e1' }}>/</span>
-        <span style={{ fontSize: '0.82rem', color: '#64748b' }}>Performance & Growth</span>
+        <span className="topbar__divider">/</span>
+        <span className="topbar__subtitle">Performance &amp; Growth</span>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+      <div className="topbar__actions">
         {/* Notification Bell */}
-        <button
-          type="button"
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: '#64748b',
-            cursor: 'pointer',
-            padding: '0.4rem',
-            position: 'relative',
-            margin: 0,
-          }}
-          title="Notifications"
-        >
-          <Bell size={20} />
-          <span
-            style={{
-              position: 'absolute',
-              top: '4px',
-              right: '4px',
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              backgroundColor: '#ef4444',
-            }}
-          />
-        </button>
+        <div className="notification-tray">
+          <button
+            type="button"
+            className="topbar__notification"
+            title="Notifications"
+            aria-label={`Notifications${unreadCount ? ` (${unreadCount} unread)` : ''}`}
+            aria-expanded={isOpen}
+            onClick={() => { setIsOpen((open) => !open); if (!isOpen) loadNotifications(); }}
+          >
+            <Bell size={20} />
+            {unreadCount > 0 && <span className="topbar__notification-dot" />}
+          </button>
+          {isOpen && <section className="notification-popover" aria-label="Notifications">
+            <div className="notification-popover__header"><strong>Notifications</strong>{unreadCount > 0 && <button type="button" onClick={markAllRead}>Mark all read</button>}</div>
+            {notifications.length === 0 ? <p className="notification-popover__empty">You’re all caught up.</p> : <div className="notification-popover__list">{notifications.map((notification) => <button type="button" key={notification._id} className={`notification-item ${notification.readAt ? '' : 'notification-item--unread'}`} onClick={() => openNotification(notification)}><span className="notification-item__title">{notification.title}</span><span>{notification.message}</span><time>{new Date(notification.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</time></button>)}</div>}
+          </section>}
+        </div>
 
         {/* User Identity Chip */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          <div
-            style={{
-              width: '34px',
-              height: '34px',
-              borderRadius: '50%',
-              backgroundColor: '#0f766e',
-              color: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 700,
-              fontSize: '0.85rem',
-            }}
-          >
+        <div className="topbar__identity">
+          <div className="topbar__avatar">
             {user.name?.charAt(0).toUpperCase() || 'U'}
           </div>
 
-          <div style={{ lineHeight: 1.2 }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#1e293b' }}>
+          <div className="topbar__identity-text">
+            <div className="topbar__name">
               {user.name}
             </div>
-            <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+            <div className="topbar__role">
               {user.role}
             </div>
           </div>
@@ -100,20 +105,7 @@ export default function Topbar({ user }) {
         <button
           type="button"
           onClick={handleLogout}
-          style={{
-            background: '#f8fafc',
-            border: '1px solid #e2e8f0',
-            color: '#475569',
-            padding: '0.4rem 0.75rem',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '0.82rem',
-            fontWeight: 500,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-            margin: 0,
-          }}
+          className="topbar__logout"
           title="Sign out of CARE Hub"
         >
           <LogOut size={16} />
@@ -123,4 +115,3 @@ export default function Topbar({ user }) {
     </header>
   );
 }
-

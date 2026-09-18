@@ -217,8 +217,9 @@ export default function ReviewerAssessmentForm() {
 
   return (
     <main>
-      <div className="card-header" style={{ borderBottom: 'none', paddingBottom: 0 }}>
+      <div className="page-header" style={{ borderBottom: 'none', paddingBottom: 0 }}>
         <div>
+          <div className="page-eyebrow">Manager assessment</div>
           <h1>{existingAssessmentId ? 'Edit Reviewer Assessment' : 'Conduct Reviewer Assessment'}</h1>
           <p>Evaluate the employee’s self-review against objectives and provide structured ratings.</p>
         </div>

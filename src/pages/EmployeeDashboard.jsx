@@ -1,21 +1,45 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import api from '../api';
+import AttachmentPanel from '../components/AttachmentPanel';
+
+const FINAL_RATING_LABELS = {
+  1: 'Needs Significant Improvement',
+  2: 'Needs Improvement',
+  3: 'Meets Expectations',
+  4: 'Exceeds Expectations',
+  5: 'Outstanding',
+};
+
+const getFinalizedRating = (reviews) => {
+  const assessment = reviews.find(({ assessment }) => {
+    const rating = Number(assessment?.calibratedRating);
+    return assessment?.isFinalized && Number.isInteger(rating) && FINAL_RATING_LABELS[rating];
+  })?.assessment;
+
+  if (!assessment) return null;
+  const rating = Number(assessment.calibratedRating);
+  return { rating, label: FINAL_RATING_LABELS[rating] };
+};
 
 export default function EmployeeDashboard() {
   const [reviews, setReviews] = useState([]);
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [settings, setSettings] = useState(null);
 
   const fetchData = async () => {
     try {
-      const [reviewsRes, plansRes] = await Promise.all([
+      const [reviewsRes, plansRes, settingsRes] = await Promise.all([
         api.get('/reviews/self-reviews'),
         api.get('/reviews/development-plans'),
+        api.get('/settings').catch(() => ({ data: { data: null } }))
       ]);
       setReviews(reviewsRes.data.data || []);
       setPlans(plansRes.data.data || []);
+      setSettings(settingsRes.data?.data || null);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load your review information');
     } finally {
@@ -29,6 +53,8 @@ export default function EmployeeDashboard() {
     };
     run();
   }, []);
+
+  const finalRating = getFinalizedRating(reviews);
 
   const handleAcknowledge = async (rev) => {
     const { value: formValues } = await Swal.fire({
@@ -77,10 +103,16 @@ export default function EmployeeDashboard() {
 
   return (
     <main>
-      <div className="card-header" style={{ borderBottom: 'none', paddingBottom: 0 }}>
+      <div className="page-header">
         <div>
+          <div className="page-eyebrow">My performance</div>
           <h1>Employee Dashboard</h1>
           <p>Manage your CARE self-reviews, track assessment feedback, and review development plans.</p>
+          {settings && settings.cycleStartDate && settings.cycleEndDate && (
+            <p style={{ fontWeight: 'bold', color: 'var(--primary)', marginTop: '0.5rem' }}>
+              Performance Review Validation: This is valid for {new Date(settings.cycleStartDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })} to {new Date(settings.cycleEndDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}.
+            </p>
+          )}
         </div>
         <Link className="button" to="/self-review">
           + Start / Update Self-Review
@@ -89,7 +121,22 @@ export default function EmployeeDashboard() {
 
       {error && <div className="alert alert-error">{error}</div>}
 
-      <div className="grid-3" style={{ marginTop: '1rem' }}>
+      {finalRating && (
+        <section
+          className={`final-rating-card ${finalRating.rating >= 3 ? 'final-rating-card--celebrate' : ''}`}
+          aria-label={`Your final performance rating is ${finalRating.rating}: ${finalRating.label}`}
+        >
+          {finalRating.rating >= 3 && <div className="final-rating-confetti" aria-hidden="true" />}
+          <div className="final-rating-content">
+            <p className="final-rating-title">🎉 Your Final Performance Rating</p>
+            <div className="final-rating-score" aria-label={`${finalRating.rating} out of 5`}>⭐ {finalRating.rating} ⭐</div>
+            <h2>{finalRating.label}</h2>
+            <p>Your performance review has been finalized.</p>
+          </div>
+        </section>
+      )}
+
+      <div className="grid-3 dashboard-stats">
         <div className="stat-card">
           <div className="label">Submitted Reviews</div>
           <div className="value">{reviews.length}</div>
@@ -105,7 +152,7 @@ export default function EmployeeDashboard() {
       </div>
 
       {/* Reviews Table */}
-      <section className="card">
+      <section className="card data-card">
         <div className="card-header">
           <h2>Your Self-Reviews</h2>
         </div>
@@ -185,7 +232,7 @@ export default function EmployeeDashboard() {
       </section>
 
       {/* Development Plans */}
-      <section className="card">
+      <section className="card data-card">
         <div className="card-header">
           <h2>Your Development Plans</h2>
         </div>
@@ -205,7 +252,8 @@ export default function EmployeeDashboard() {
               </thead>
               <tbody>
                 {plans.map((p) => (
-                  <tr key={p._id}>
+                  <Fragment key={p._id}>
+                  <tr>
                     <td><strong>{p.cycle} {p.year || ''}</strong></td>
                     <td>{p.priorities || 'N/A'}</td>
                     <td>{p.goals?.join(', ') || 'N/A'}</td>
@@ -217,6 +265,8 @@ export default function EmployeeDashboard() {
                       </span>
                     </td>
                   </tr>
+                  <tr><td colSpan="4"><AttachmentPanel endpoint={`/reviews/development-plans/${p._id}/attachments`} title="Plan evidence & documents" /></td></tr>
+                  </Fragment>
                 ))}
               </tbody>
             </table>

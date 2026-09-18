@@ -6,20 +6,19 @@ export default function AppLayout({ user, children }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
+    <div className="app-shell">
       <Sidebar
         user={user}
         isCollapsed={isCollapsed}
         onToggle={() => setIsCollapsed(!isCollapsed)}
       />
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      <div className="app-shell__content">
         <Topbar user={user} />
-        <div style={{ flex: 1, padding: '1.5rem 2rem' }}>
+        <div className="app-shell__main">
           {children}
         </div>
       </div>
     </div>
   );
 }
-

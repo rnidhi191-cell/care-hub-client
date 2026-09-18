@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
 import api from '../api';
+import AttachmentPanel from '../components/AttachmentPanel';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -23,7 +24,7 @@ const BLANK_EMP_FORM = {
   email: '',
   password: '',
   employeeCode: '',
-  role: 'Employee',
+  role: 'EMPLOYEE',
   departmentId: '',
   jobTitleId: '',
   locationId: '',
@@ -348,8 +349,9 @@ export default function HRDashboard() {
   return (
     <main>
       {/* ── Page Header ── */}
-      <div className="card-header" style={{ borderBottom: 'none', paddingBottom: 0 }}>
+      <div className="page-header" style={{ borderBottom: 'none', paddingBottom: 0 }}>
         <div>
+          <div className="page-eyebrow">People operations</div>
           <h1>HR Administration Portal</h1>
           <p>Oversee company-wide review cycles, monitor progress, and manage employee development plans.</p>
         </div>
@@ -389,7 +391,7 @@ export default function HRDashboard() {
       {activeTab === 'dashboard' && (
         <>
           {/* Metric Cards */}
-          <div className="grid-3" style={{ marginTop: '1rem' }}>
+          <div className="grid-3 dashboard-stats" style={{ marginTop: '1rem' }}>
             <div className="stat-card">
               <div className="label">Total Reviews</div>
               <div className="value">{reviews.length}</div>
@@ -1034,7 +1036,8 @@ export default function HRDashboard() {
                   </thead>
                   <tbody>
                     {plans.map((p) => (
-                      <tr key={p._id}>
+                      <Fragment key={p._id}>
+                      <tr>
                         <td><strong>{p.employee?.name || 'N/A'}</strong></td>
                         <td>{p.cycle}</td>
                         <td>{p.priorities || '—'}</td>
@@ -1054,6 +1057,8 @@ export default function HRDashboard() {
                           </button>
                         </td>
                       </tr>
+                      <tr><td colSpan="6"><AttachmentPanel endpoint={`/reviews/development-plans/${p._id}/attachments`} title="Plan evidence & documents" /></td></tr>
+                      </Fragment>
                     ))}
                   </tbody>
                 </table>

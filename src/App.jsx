@@ -14,16 +14,20 @@ import ReviewerDashboard from './pages/ReviewerDashboard';
 import ReviewerAssessmentForm from './pages/ReviewerAssessmentForm';
 import HRDashboard from './pages/HRDashboard';
 
+import AdminDashboard from './pages/AdminDashboard';
+import ReviewCycles from './pages/ReviewCycles';
+import ProgressChecks from './pages/ProgressChecks';
+import Reports from './pages/Reports';
+
+
 const homeFor = (user) => {
   if (!user) return '/login';
   const role = user.role?.toUpperCase();
-  if (role === 'SUPER_ADMIN' || role === 'HR_ADMIN' || role === 'HR' || role === 'HR_HRBP') {
-    return '/hr';
-  }
-  if (role === 'MANAGER' || role === 'REVIEWER') {
-    return '/reviewer';
-  }
-  return '/employee';
+  if (role === 'ADMIN') return '/admin';
+  if (role === 'HR') return '/hr';
+  if (role === 'MANAGER') return '/reviewer';
+  if (role === 'EMPLOYEE') return '/employee';
+  return null;
 };
 
 export default function App() {
@@ -57,16 +61,12 @@ export default function App() {
     const currentRole = user.role?.toUpperCase();
     const isAllowed = allowedRoles.some((r) => {
       const target = r.toUpperCase();
-      if (target === 'SUPER_ADMIN' && currentRole === 'SUPER_ADMIN') return true;
-      if (currentRole === 'SUPER_ADMIN') return true;
-      if (target === 'HR' && (currentRole === 'HR' || currentRole === 'HR_ADMIN' || currentRole === 'HR_HRBP')) return true;
-      if (target === 'REVIEWER' && (currentRole === 'REVIEWER' || currentRole === 'MANAGER')) return true;
-      if (target === 'EMPLOYEE' && currentRole === 'EMPLOYEE') return true;
+      if (currentRole === 'ADMIN') return true;
       return currentRole === target;
     });
 
     if (!isAllowed) {
-      return <Navigate to={homeFor(user)} replace />;
+      return <Navigate to={homeFor(user) || '/login'} replace />;
     }
 
     return <AppLayout user={user}>{element}</AppLayout>;
@@ -74,14 +74,15 @@ export default function App() {
 
   return (
     <Routes>
+      <Route path="/" element={<Navigate to={homeFor(user) || '/login'} replace />} />
       {/* Public Routes */}
       <Route
         path="/login"
-        element={user ? <Navigate to={homeFor(user)} replace /> : <Login onLogin={(u) => dispatch(setCredentials({ user: u }))} />}
+        element={user && homeFor(user) ? <Navigate to={homeFor(user)} replace /> : <Login onLogin={(credentials) => dispatch(setCredentials(credentials))} />}
       />
       <Route
         path="/register"
-        element={user ? <Navigate to={homeFor(user)} replace /> : <Register onLogin={(u) => dispatch(setCredentials({ user: u }))} />}
+        element={user && homeFor(user) ? <Navigate to={homeFor(user)} replace /> : <Register onLogin={(credentials) => dispatch(setCredentials(credentials))} />}
       />
 
       <Route
@@ -96,33 +97,43 @@ export default function App() {
       {/* Employee Routes */}
       <Route
         path="/employee"
-        element={guard(['Employee', 'EMPLOYEE'], <EmployeeDashboard />)}
+        element={guard(['EMPLOYEE'], <EmployeeDashboard />)}
       />
       <Route
         path="/self-review"
-        element={guard(['Employee', 'EMPLOYEE', 'HR', 'HR_ADMIN', 'SUPER_ADMIN'], <SelfReviewForm />)}
+        element={guard(['EMPLOYEE', 'HR', 'ADMIN'], <SelfReviewForm />)}
       />
 
       {/* Reviewer / Manager Routes */}
       <Route
         path="/reviewer"
-        element={guard(['Reviewer', 'MANAGER', 'SUPER_ADMIN'], <ReviewerDashboard />)}
+        element={guard(['MANAGER', 'ADMIN'], <ReviewerDashboard />)}
       />
       <Route
         path="/reviewer/assessment"
-        element={guard(['Reviewer', 'MANAGER', 'HR', 'HR_ADMIN', 'SUPER_ADMIN'], <ReviewerAssessmentForm />)}
+        element={guard(['MANAGER', 'HR', 'ADMIN'], <ReviewerAssessmentForm />)}
       />
 
-      {/* HR Admin Routes */}
+      
+      {/* HR Routes */}
       <Route
         path="/hr"
-        element={guard(['HR', 'HR_ADMIN', 'HR_HRBP', 'SUPER_ADMIN'], <HRDashboard />)}
+        element={guard(['HR'], <HRDashboard />)}
+      />
+      <Route path="/cycles" element={guard(['ADMIN', 'HR', 'MANAGER'], <ReviewCycles />)} />
+      <Route path="/progress-checks" element={guard(['ADMIN', 'HR'], <ProgressChecks />)} />
+      <Route path="/reports" element={guard(['ADMIN', 'HR', 'MANAGER', 'EMPLOYEE'], <Reports />)} />
+
+      {/* Admin Route */}
+      <Route
+        path="/admin"
+        element={guard(['ADMIN'], <AdminDashboard />)}
       />
 
       {/* Catch-all fallback */}
       <Route
         path="*"
-        element={<Navigate to={user ? homeFor(user) : '/login'} replace />}
+        element={<Navigate to={homeFor(user) || '/login'} replace />}
       />
     </Routes>
   );

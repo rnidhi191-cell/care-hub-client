@@ -30,8 +30,9 @@ export default function ReviewerDashboard() {
 
   return (
     <main>
-      <div className="card-header" style={{ borderBottom: 'none', paddingBottom: 0 }}>
+      <div className="page-header">
         <div>
+          <div className="page-eyebrow">Performance reviews</div>
           <h1>Reviewer Portal</h1>
           <p>Evaluate employee self-reviews, provide evidence-based feedback, and submit performance ratings.</p>
         </div>
@@ -39,7 +40,7 @@ export default function ReviewerDashboard() {
 
       {error && <div className="alert alert-error">{error}</div>}
 
-      <div className="grid-3" style={{ marginTop: '1rem' }}>
+      <div className="grid-3 dashboard-stats">
         <div className="stat-card">
           <div className="label">Total Submissions</div>
           <div className="value">{reviews.length}</div>
@@ -54,7 +55,7 @@ export default function ReviewerDashboard() {
         </div>
       </div>
 
-      <section className="card">
+      <section className="card data-card">
         <div className="card-header">
           <h2>Employee Submissions</h2>
           <button className="button button-secondary button-sm" onClick={fetchReviews}>

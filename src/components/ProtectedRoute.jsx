@@ -1,8 +1,11 @@
 import { Navigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { selectCurrentToken, selectCurrentUser } from '../store/slices/authSlice';
 
 export default function ProtectedRoute({ children }) {
-  const token = localStorage.getItem('careHubToken');
-  if (!token) {
+  const token = useSelector(selectCurrentToken);
+  const user = useSelector(selectCurrentUser);
+  if (!token || !user) {
     return <Navigate to="/login" replace />;
   }
   return children;

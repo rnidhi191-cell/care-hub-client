@@ -6,19 +6,24 @@ import {
   ShieldCheck,
   BookOpen,
   UserCheck,
+  Settings,
+  CalendarDays,
 } from 'lucide-react';
+import Logo from '../Logo';
 
 export default function Sidebar({ user, isCollapsed, onToggle }) {
   if (!user) return null;
 
   const role = user.role?.toUpperCase();
-  const isSuperAdmin = role === 'SUPER_ADMIN';
-  const isHR = isSuperAdmin || role === 'HR_ADMIN' || role === 'HR' || role === 'HR_HRBP';
-  const isManager = isSuperAdmin || role === 'MANAGER' || role === 'REVIEWER';
-  const isEmployee = isSuperAdmin || role === 'EMPLOYEE' || role === 'EMPLOYEE';
+  const isAdmin = role === 'ADMIN';
+  const isHR = role === 'HR';
+  const isManager = role === 'MANAGER';
+  const isEmployee =
+    role === 'EMPLOYEE';
 
   return (
     <aside
+      className="app-sidebar"
       style={{
         width: isCollapsed ? '72px' : '240px',
         minHeight: '100vh',
@@ -44,32 +49,7 @@ export default function Sidebar({ user, isCollapsed, onToggle }) {
           borderBottom: '1px solid #1e293b',
         }}
       >
-        {!isCollapsed && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-            <div
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '6px',
-                backgroundColor: '#0f766e',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 800,
-                fontSize: '1.1rem',
-                color: '#ffffff',
-              }}
-            >
-              C
-            </div>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: '1rem', letterSpacing: '0.05em' }}>
-                CARE HUB
-              </div>
-              <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>Enterprise Performance</div>
-            </div>
-          </div>
-        )}
+        <Logo compact={isCollapsed} showName={false} />
         <button
           type="button"
           onClick={onToggle}
@@ -205,9 +185,69 @@ export default function Sidebar({ user, isCollapsed, onToggle }) {
               <ClipboardCheck size={18} />
               {!isCollapsed && <span>Assess Review</span>}
             </NavLink>
+            <NavLink
+              to="/cycles"
+              style={({ isActive }) => ({
+                display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.65rem 0.75rem', borderRadius: '6px',
+                color: isActive ? '#38bdf8' : '#cbd5e1', backgroundColor: isActive ? '#1e293b' : 'transparent', textDecoration: 'none', fontSize: '0.9rem', fontWeight: isActive ? 600 : 500, marginBottom: '0.25rem',
+              })}
+            >
+              <CalendarDays size={18} />
+              {!isCollapsed && <span>Review Cycles</span>}
+            </NavLink>
           </div>
         )}
+        {/* Admin Section */}
+        {isAdmin && (
+          <div style={{ marginBottom: '1.25rem' }}>
+            {!isCollapsed && (
+              <div
+                style={{
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  color: '#64748b',
+                  padding: '0.4rem 0.75rem',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                Admin Panel
+              </div>
+            )}
 
+            <NavLink
+              to="/admin"
+              style={({ isActive }) => ({
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.65rem 0.75rem',
+                borderRadius: '6px',
+                color: isActive ? '#38bdf8' : '#cbd5e1',
+                backgroundColor: isActive ? '#1e293b' : 'transparent',
+                textDecoration: 'none',
+                fontSize: '0.9rem',
+                fontWeight: isActive ? 600 : 500,
+                marginBottom: '0.25rem',
+              })}
+            >
+              <Settings size={18} />
+              {!isCollapsed && <span>Admin Dashboard</span>}
+            </NavLink>
+            <NavLink
+              to="/cycles"
+              style={({ isActive }) => ({
+                display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.65rem 0.75rem', borderRadius: '6px',
+                color: isActive ? '#38bdf8' : '#cbd5e1', backgroundColor: isActive ? '#1e293b' : 'transparent', textDecoration: 'none', fontSize: '0.9rem', fontWeight: isActive ? 600 : 500, marginBottom: '0.25rem',
+              })}
+            >
+              <CalendarDays size={18} />
+              {!isCollapsed && <span>Review Cycles</span>}
+            </NavLink>
+            <NavLink to="/progress-checks" style={({ isActive }) => ({ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.65rem 0.75rem', borderRadius: '6px', color: isActive ? '#38bdf8' : '#cbd5e1', backgroundColor: isActive ? '#1e293b' : 'transparent', textDecoration: 'none', fontSize: '0.9rem', fontWeight: isActive ? 600 : 500, marginBottom: '0.25rem' })}><ClipboardCheck size={18} />{!isCollapsed && <span>Progress Checks</span>}</NavLink>
+            <NavLink to="/reports" style={({ isActive }) => ({ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.65rem 0.75rem', borderRadius: '6px', color: isActive ? '#38bdf8' : '#cbd5e1', backgroundColor: isActive ? '#1e293b' : 'transparent', textDecoration: 'none', fontSize: '0.9rem', fontWeight: isActive ? 600 : 500, marginBottom: '0.25rem' })}><LayoutDashboard size={18} />{!isCollapsed && <span>Reports</span>}</NavLink>
+          </div>
+        )}
         {/* HR Section */}
         {isHR && (
           <div style={{ marginBottom: '1.25rem' }}>
@@ -244,6 +284,18 @@ export default function Sidebar({ user, isCollapsed, onToggle }) {
               <ShieldCheck size={18} />
               {!isCollapsed && <span>HR Dashboard</span>}
             </NavLink>
+            <NavLink
+              to="/cycles"
+              style={({ isActive }) => ({
+                display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.65rem 0.75rem', borderRadius: '6px',
+                color: isActive ? '#38bdf8' : '#cbd5e1', backgroundColor: isActive ? '#1e293b' : 'transparent', textDecoration: 'none', fontSize: '0.9rem', fontWeight: isActive ? 600 : 500, marginBottom: '0.25rem',
+              })}
+            >
+              <CalendarDays size={18} />
+              {!isCollapsed && <span>Review Cycles</span>}
+            </NavLink>
+            <NavLink to="/progress-checks" style={({ isActive }) => ({ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.65rem 0.75rem', borderRadius: '6px', color: isActive ? '#38bdf8' : '#cbd5e1', backgroundColor: isActive ? '#1e293b' : 'transparent', textDecoration: 'none', fontSize: '0.9rem', fontWeight: isActive ? 600 : 500, marginBottom: '0.25rem' })}><ClipboardCheck size={18} />{!isCollapsed && <span>Progress Checks</span>}</NavLink>
+            <NavLink to="/reports" style={({ isActive }) => ({ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.65rem 0.75rem', borderRadius: '6px', color: isActive ? '#38bdf8' : '#cbd5e1', backgroundColor: isActive ? '#1e293b' : 'transparent', textDecoration: 'none', fontSize: '0.9rem', fontWeight: isActive ? 600 : 500, marginBottom: '0.25rem' })}><LayoutDashboard size={18} />{!isCollapsed && <span>Reports</span>}</NavLink>
           </div>
         )}
 
@@ -264,12 +316,11 @@ export default function Sidebar({ user, isCollapsed, onToggle }) {
               fontSize: '0.85rem',
             }}
           >
-            <BookOpen size={18} />
-            {!isCollapsed && <span>API Docs (Swagger)</span>}
+            {/* <BookOpen size={18} /> */}
+            
           </a>
         </div>
       </nav>
     </aside>
   );
 }
-

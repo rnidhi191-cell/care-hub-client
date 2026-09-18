@@ -9,7 +9,7 @@ export default function Register({ onLogin }) {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'Employee',
+    role: 'EMPLOYEE',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -44,12 +44,7 @@ export default function Register({ onLogin }) {
 
       const { token, accessToken, refreshToken, user } = data.data;
       const activeToken = accessToken || token;
-      localStorage.setItem('careHubToken', activeToken);
-      if (refreshToken) {
-        localStorage.setItem('careHubRefreshToken', refreshToken);
-      }
-      localStorage.setItem('careHubUser', JSON.stringify(user));
-      onLogin(user);
+      onLogin({ user, token: activeToken, refreshToken });
 
       await Swal.fire({
         icon: 'success',
@@ -60,12 +55,7 @@ export default function Register({ onLogin }) {
       });
 
       const role = user.role?.toUpperCase();
-      const targetPath =
-        role === 'SUPER_ADMIN' || role === 'HR_ADMIN' || role === 'HR' || role === 'HR_HRBP'
-          ? '/hr'
-          : role === 'MANAGER' || role === 'REVIEWER'
-          ? '/reviewer'
-          : '/employee';
+      const targetPath = role === 'EMPLOYEE' ? '/employee' : '/login';
 
       navigate(targetPath);
     } catch (err) {
@@ -83,7 +73,9 @@ export default function Register({ onLogin }) {
 
   return (
     <main className="login-container">
-      <div className="card">
+      <div className="card auth-card">
+        <div className="auth-brand" aria-hidden="true">C</div>
+        <div className="auth-eyebrow">CARE HUB</div>
         <h1>Create Account</h1>
         <p className="subtitle">Join CARE Hub to participate in performance reviews and goal tracking.</p>
 
@@ -117,9 +109,7 @@ export default function Register({ onLogin }) {
           <label>
             Account Role
             <select name="role" value={form.role} onChange={handleChange}>
-              <option value="Employee">Employee</option>
-              <option value="Reviewer">Reviewer</option>
-              <option value="HR">HR Admin</option>
+              <option value="EMPLOYEE">Employee</option>
             </select>
           </label>
 
